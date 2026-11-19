@@ -57,10 +57,11 @@ Plano registrado antes de qualquer edição de código. Cada decisão segue as i
 
 Resultados observados em 19/11/2026 antes de qualquer implementação:
 
-- `npm run test:data --prefix octofit-tracker/backend`: 4 falhas, 1 aprovado. As falhas são `expected undefined to be defined` porque os esquemas não declaram campos obrigatórios. O teste de seed idempotente passa e precisa continuar passando.
+- `npm run test:data --prefix octofit-tracker/backend`: 4 falhas, 1 aprovado. As falhas são `expected undefined to be defined` porque os esquemas não declaram campos obrigatórios. O teste de seed idempotente passa e precisa continuar passando. **Após a mudança nos modelos (campos obrigatórios em `User`, `Team`, `Activity` e `Workout`): 5 de 5 passam.**
 - `npm run test:api --prefix octofit-tracker/backend`: 4 de 4 falham. Criar atividade retorna 501 em vez de 400; criar equipe também retorna 501; o placar retorna `[]`; a sugestão retorna o primeiro treino qualquer, não o compatível.
 - `npm test --prefix octofit-tracker/frontend`: 15 de 15 falham. Todas as telas são o placeholder `CapabilityCard` sem `role="status"` com "carregando", sem dados, sem estado vazio e sem alerta de erro.
 - `npm run build --prefix octofit-tracker/backend` e `npm run build --prefix octofit-tracker/frontend`: passam. A compilação não cobre o comportamento.
+- `npm run seed --prefix octofit-tracker/backend` (duas execuções no MongoDB local `octofit_db`, porta 27017): cria 2 pessoas, 2 equipes, 2 atividades e 2 treinos. A segunda execução não altera nenhum documento, confirmado por um resumo idêntico de todos os documentos, incluindo `_id`.
 
 ## Ordem segura de implementação
 
