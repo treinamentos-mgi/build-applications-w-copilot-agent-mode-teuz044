@@ -43,19 +43,38 @@ flowchart LR
 
 ## Decisões de implementação
 
-Registre seu plano aqui antes de editar o código.
+Plano registrado antes de qualquer edição de código. Cada decisão segue as instruções de backend e frontend em `.github/instructions`.
 
-- Decisão da camada de apresentação:
-- Decisão da camada de lógica:
-- Decisão da camada de dados:
-- Abordagem para registro de atividades:
-- Abordagem para gerenciamento de equipes:
-- Abordagem para o placar:
-- Abordagem para sugestões de treino:
+- Decisão da camada de apresentação: os componentes em `octofit-tracker/frontend/src/components` apenas renderizam. As requisições ficam em `src/api/client.ts` (uso obrigatório) e em funções tipadas por recurso. Cada recurso exibe carregamento (`role="status"`), vazio, erro (`role="alert"`) e sucesso em português do Brasil. `CapabilityCard` deixa de exibir "Implementação pendente". Equipes mostram a quantidade de integrantes, pois a API devolve IDs, não nomes. Tipos de atividade (`run`, `cycle`, `strength`) recebem rótulos em português na apresentação; os códigos permanecem no dado.
+- Decisão da camada de lógica: a validação de entrada fica nos serviços de `octofit-tracker/backend/src/services/octofitService.ts`, retornando 400 para entradas inválidas e 404 para referências inexistentes. Erros internos continuam com 500. Não há autenticação neste exercício.
+- Decisão da camada de dados: as regras de obrigatoriedade ficam nos esquemas Mongoose (`User`, `Team`, `Activity`, `Workout`). Não adicionamos `enum` para não restringir os códigos de domínio já usados nos testes. Os dados de demonstração continuam sendo gravados apenas por `seed.ts` com upsert.
+- Abordagem para registro de atividades: `POST` valida `userId` e `teamId` como ObjectId bem-formados (400 caso contrário), verifica que pessoa e equipe existem (404 caso contrário), valida `type` não vazio e `minutes` numérico positivo (400). `points` é calculado a partir de `minutes` (1 ponto por minuto), e `occurredAt` recebe a data atual. Não exigimos que a pessoa pertença à equipe informada; isso é uma pendência de regra de negócio a confirmar.
+- Abordagem para gerenciamento de equipes: `POST` rejeita nome ou mascote ausente com 400 e grava `name`, `mascot` e `members` (IDs validados). Não sincronizamos `User.team` ao criar equipes; isso também fica como pendência.
+- Abordagem para o placar: agregação de `Activity` por equipe, com soma de `points`, incluindo todas as equipes (com 0 pontos quando não houver atividades). Ordenação decrescente com desempate pelo nome, e `rank` iniciando em 1.
+- Abordagem para sugestões de treino: o e-mail é normalizado para minúsculas e a pessoa é buscada por ele (404 se não existir). O foco vem da atividade mais recente (`run` e `cycle` mapeiam para `endurance`; `strength` para `strength`) ou, sem atividade, da `fitnessGoal`. A sugestão é o treino com esse foco, ordenado por título, e `reason` cita a atividade recente em português (por exemplo, "Baseado na sua atividade recente de corrida"). Na tela, a pessoa padrão é `mona@example.com`, pois não há autenticação.
+
+## Estado atual dos testes
+
+Resultados observados em 19/11/2026 antes de qualquer implementação:
+
+- `npm run test:data --prefix octofit-tracker/backend`: 4 falhas, 1 aprovado. As falhas são `expected undefined to be defined` porque os esquemas não declaram campos obrigatórios. O teste de seed idempotente passa e precisa continuar passando.
+- `npm run test:api --prefix octofit-tracker/backend`: 4 de 4 falham. Criar atividade retorna 501 em vez de 400; criar equipe também retorna 501; o placar retorna `[]`; a sugestão retorna o primeiro treino qualquer, não o compatível.
+- `npm test --prefix octofit-tracker/frontend`: 15 de 15 falham. Todas as telas são o placeholder `CapabilityCard` sem `role="status"` com "carregando", sem dados, sem estado vazio e sem alerta de erro.
+- `npm run build --prefix octofit-tracker/backend` e `npm run build --prefix octofit-tracker/frontend`: passam. A compilação não cobre o comportamento.
+
+## Ordem segura de implementação
+
+1. Dados: adicionar validações obrigatórias nos esquemas. Corrige os 4 testes de dados e preserva o seed idempotente.
+2. API de atividades e equipes: validação de entrada, referências e cálculo de pontos. Corrige 2 dos 4 testes de API.
+3. Placar: agregação por equipe. Depende das atividades gravadas corretamente.
+4. Sugestões de treino: depende de atividades e da `fitnessGoal`. Corrige o último teste de API.
+5. Frontend: um cliente tipado por recurso, depois os estados de carregamento, vazio, erro e sucesso em cada tela. Depende do contrato da API.
+
+Cada etapa só avança com os testes da etapa anterior verdes. Mudanças pequenas, sem regeneração ampla.
 
 ## Plano de testes
 
-Registre os comandos executados e o significado de cada falha.
+Comandos a executar a cada etapa e o significado de cada falha atual. Não adicionamos testes novos além dos existentes, salvo se uma regra nova não estiver coberta.
 
 - Testes da camada de dados: `npm run test:data --prefix octofit-tracker/backend`
 - Testes da API: `npm run test:api --prefix octofit-tracker/backend`
