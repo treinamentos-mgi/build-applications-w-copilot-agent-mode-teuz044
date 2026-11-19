@@ -63,6 +63,19 @@ Resultados observados em 19/11/2026 antes de qualquer implementação:
 - `npm run build --prefix octofit-tracker/backend` e `npm run build --prefix octofit-tracker/frontend`: passam. A compilação não cobre o comportamento.
 - `npm run seed --prefix octofit-tracker/backend` (duas execuções no MongoDB local `octofit_db`, porta 27017): cria 2 pessoas, 2 equipes, 2 atividades e 2 treinos. A segunda execução não altera nenhum documento, confirmado por um resumo idêntico de todos os documentos, incluindo `_id`.
 
+### Validações aplicadas na camada de dados
+
+- `User`: nome sem espaços nas extremidades e não vazio; e-mail com `trim`, `lowercase`, formato básico e índice único; `fitnessGoal` restrito a `endurance`, `strength` e `mobility`.
+- `Team`: `name` único e sem espaços nas extremidades; `mascot` sem espaços nas extremidades.
+- `Activity`: `type` restrito a `run`, `walk`, `cycle` e `strength`; `minutes` mínimo 1; `points` mínimo 0.
+- `Workout`: `title` único e sem espaços nas extremidades; `focus` restrito aos mesmos valores de `fitnessGoal`; `minutes` mínimo 1; `difficulty` restrita a `easy`, `moderate` e `hard`.
+- Mensagens de validação visíveis em português do Brasil.
+- Relações entre atividade, usuário e equipe continuam fora do esquema (regra de serviço, a ser tratada na etapa de API).
+
+Verificação após as mudanças: `test:data` 5 de 5; build do backend passa; seed executado duas vezes com contagens estáveis (2 pessoas, 2 equipes, 2 atividades, 2 treinos) e índice único de e-mail criado. `test:api` continua 4 de 4 falhando pelos serviços ainda não implementados.
+
+Pendência fora do escopo: o grader `step2-data` exige a palavra `idempotently` em `tests/data.contract.test.ts`, mas o título do teste protegido está em português (`de forma idempotente`). O contrato não pode ser alterado sem quebrar a verificação de hash, então a decisão cabe ao mantenedor.
+
 ## Ordem segura de implementação
 
 1. Dados: adicionar validações obrigatórias nos esquemas. Corrige os 4 testes de dados e preserva o seed idempotente.
